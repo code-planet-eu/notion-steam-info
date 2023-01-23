@@ -12,7 +12,7 @@ workers.steamGetPlayerSummaries = []
 workers.init = async () => {
   log('Starting workers...')
   log('Getting data from Notion...')
-  notion.getDatabaseData({ interval: 1000 * 60 * 10 })
+  notion.getDatabaseData(10)
 }
 
 notion.on('onData', async data => {

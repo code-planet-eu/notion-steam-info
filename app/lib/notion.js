@@ -24,7 +24,7 @@ notion.getDatabaseData = interval => {
       const data = await notion.getDatabase()
       notion.emit('onData', data)
       return data
-    }, interval)
+    }, 1000 * 60 * interval)
   } else {
     notion.getDatabase().then(data => {
       notion.emit('onData', data)
