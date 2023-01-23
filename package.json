@@ -1,0 +1,54 @@
+{
+  "name": "notion-steam-info",
+  "version": "1.0.0",
+  "description": "Steam account info with notion integration",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "lint:staged": "lint-staged",
+    "lint:check": "eslint . --ignore-path .gitignore --ext .js",
+    "husky:prepare": "husky install",
+    "env:init": "cp app.env.example app.env",
+    "env:set": "set -a; source app.env; set +a"
+  },
+  "author": "Jakub Supa <git.io/jakub>",
+  "license": "ISC",
+  "dependencies": {
+    "@notionhq/client": "^2.2.3",
+    "@ptkdev/logger": "^1.8.0",
+    "dayjs": "^1.11.7",
+    "log-to-file": "^3.0.3",
+    "request": "^2.88.2"
+  },
+  "lint-staged": {
+    "*.js": "eslint --cache --fix"
+  },
+  "devDependencies": {
+    "eslint": "^8.32.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-config-prettier": "^8.6.0",
+    "eslint-plugin-import": "^2.27.5",
+    "eslint-plugin-jsonc": "^2.6.0",
+    "eslint-plugin-prefer-arrow-functions": "^3.1.4",
+    "eslint-plugin-prettier": "^4.2.1",
+    "husky": "^8.0.3",
+    "lint-staged": "^13.1.0",
+    "nodemon": "^2.0.20",
+    "prettier": "^2.8.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/code-planet-eu/notion-steam-info.git"
+  },
+  "bugs": {
+    "url": "https://github.com/code-planet-eu/notion-steam-info/issues"
+  },
+  "homepage": "https://github.com/code-planet-eu/notion-steam-info#readme",
+  "keywords": [
+    "notion",
+    "steam",
+    "game",
+    "info"
+  ]
+}
