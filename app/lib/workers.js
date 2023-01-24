@@ -60,6 +60,8 @@ workers.checkSteam = async item => {
   const steamIdBans = workers.findSteamIdBans(steamID)
   const steamIdData = workers.findSteamIdData(steamID)
 
+  if (steamIdBans === undefined || steamIdData === undefined) return
+
   const SteamStatus = workers.getSteamStatus(steamIdData)
   const SteamBans = workers.getSteamBans(steamIdBans)
   const AccountAge = workers.getAccountAge(steamIdData)
