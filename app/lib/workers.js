@@ -53,16 +53,29 @@ workers.getSteamIdsData = () =>
     })
   })
 
+workers.getSteamLevel = steamID =>
+  new Promise((resolve, reject) => {
+    const url = `https://api.steampowered.com/IPlayerService/GetSteamLevel/v1?key=${config.steamApiKey}&steamid=${steamID}`
+
+    request(url, (error, response, body) => {
+      if (error) {
+        reject(error)
+      } else {
+        resolve(JSON.parse(body).response.player_level)
+      }
+    })
+  })
+
 workers.checkSteam = async item => {
   const { id, properties } = item
   const steamID = properties.steamID.formula.string
 
   const steamIdBans = workers.findSteamIdBans(steamID)
   const steamIdData = workers.findSteamIdData(steamID)
-  const steamLevel = workers.getSteamLevel(steamID)
 
   if (steamIdBans === undefined || steamIdData === undefined) return
 
+  const steamLevel = await workers.getSteamLevel(steamID)
   const SteamStatus = workers.getSteamStatus(steamIdData)
   const SteamBans = workers.getSteamBans(steamIdBans)
   const AccountAge = workers.getAccountAge(steamIdData)
@@ -88,19 +101,6 @@ workers.checkSteam = async item => {
     }
   })
 }
-
-workers.getSteamLevel = steamID =>
-  new Promise((resolve, reject) => {
-    const url = `https://api.steampowered.com/IPlayerService/GetSteamLevel/v1?key=${config.steamApiKey}&steamid=${steamID}`
-
-    request(url, (error, response, body) => {
-      if (error) {
-        reject(error)
-      } else {
-        resolve(JSON.parse(body).response.player_level)
-      }
-    })
-  })
 
 workers.getSteamStatus = steamIdData => {
   const { personastate, gameextrainfo } = steamIdData
