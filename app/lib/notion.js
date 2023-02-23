@@ -10,25 +10,27 @@ notion.client = new Client({
   auth: config.notionAuth
 })
 
-notion.getDatabase = async () => {
-  const { results } = await notion.client.databases.query({
-    database_id: notion.databaseId
+notion.getDatabase = async start_cursor => {
+  const { results, next_cursor, has_more } = await notion.client.databases.query({
+    database_id: notion.databaseId,
+    start_cursor
   })
 
-  return results
+  return { results, next_cursor, has_more }
 }
 
-notion.getDatabaseData = interval => {
+notion.getDatabaseData = (interval, start_cursor) => {
   if (interval) {
     setInterval(async () => {
-      const data = await notion.getDatabase()
-      notion.emit('onData', data)
-      return data
+      const { results, next_cursor, has_more } = await notion.getDatabase(start_cursor)
+      notion.emit('onData', { results, next_cursor, has_more })
+      return results
     }, 1000 * 60 * interval)
   } else {
-    notion.getDatabase().then(data => {
-      notion.emit('onData', data)
-      return data
+    notion.getDatabase(start_cursor).then(data => {
+      const { results, next_cursor, has_more } = data
+      notion.emit('onData', { results, next_cursor, has_more })
+      return results
     })
   }
 }

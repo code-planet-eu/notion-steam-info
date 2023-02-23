@@ -16,11 +16,17 @@ workers.init = async () => {
 }
 
 notion.on('onData', async data => {
+  const { results, next_cursor, has_more } = data
+  console.log(next_cursor, has_more)
+  if (has_more) {
+    log('Getting more data from Notion...')
+    notion.getDatabaseData(false, next_cursor)
+  }
   log('Processing data...')
-  workers.steamIds = data.map(item => item.properties.steamID.formula.string)
+  workers.steamIds = results.map(item => item.properties.steamID.formula.string)
   workers.getSteamIdsData().then(() => {
     workers.getSteamIdsBans().then(() => {
-      data.forEach(item => workers.checkSteam(item))
+      results.forEach(item => workers.checkSteam(item))
     })
   })
 })
@@ -61,6 +67,8 @@ workers.getSteamLevel = steamID =>
       if (error) {
         reject(error)
       } else {
+        console.log(body)
+        console.log(steamID)
         resolve(JSON.parse(body).response.player_level)
       }
     })
@@ -75,7 +83,7 @@ workers.checkSteam = async item => {
 
   if (steamIdBans === undefined || steamIdData === undefined) return
 
-  const steamLevel = await workers.getSteamLevel(steamID)
+  // const steamLevel = await workers.getSteamLevel(steamID)
   const SteamStatus = workers.getSteamStatus(steamIdData)
   const SteamBans = workers.getSteamBans(steamIdBans)
   const AccountAge = workers.getAccountAge(steamIdData)
@@ -95,9 +103,6 @@ workers.checkSteam = async item => {
       date: {
         start: AccountAge
       }
-    },
-    'Steam Level': {
-      number: steamLevel
     }
   })
 }

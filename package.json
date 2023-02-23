@@ -1,6 +1,6 @@
 {
   "name": "notion-steam-info",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Steam account info with notion integration",
   "main": "index.js",
   "scripts": {

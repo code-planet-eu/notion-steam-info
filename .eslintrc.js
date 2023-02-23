@@ -11,6 +11,7 @@ module.exports = {
   plugins: ['prettier', 'prefer-arrow-functions'],
   rules: {
     indent: [0, 'tab'],
+    camelcase: 0,
     'no-tabs': 0,
     'new-cap': 0,
     'no-shadow': 0,
