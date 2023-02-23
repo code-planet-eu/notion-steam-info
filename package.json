@@ -1,6 +1,6 @@
 {
   "name": "notion-steam-info",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Steam account info with notion integration",
   "main": "index.js",
   "scripts": {
@@ -14,16 +14,6 @@
   },
   "author": "Jakub Supa <git.io/jakub>",
   "license": "ISC",
-  "dependencies": {
-    "@notionhq/client": "^2.2.3",
-    "@ptkdev/logger": "^1.8.0",
-    "dayjs": "^1.11.7",
-    "log-to-file": "^3.0.3",
-    "request": "^2.88.2"
-  },
-  "lint-staged": {
-    "*.js": "eslint --cache --fix"
-  },
   "devDependencies": {
     "eslint": "^8.32.0",
     "eslint-config-airbnb-base": "^15.0.0",
@@ -36,6 +26,17 @@
     "lint-staged": "^13.1.0",
     "nodemon": "^2.0.20",
     "prettier": "^2.8.3"
+  },
+  "dependencies": {
+    "@notionhq/client": "^2.2.3",
+    "@ptkdev/logger": "^1.8.0",
+    "dayjs": "^1.11.7",
+    "log-to-file": "^3.0.3",
+    "request": "^2.88.2",
+    "steam-session": "^0.0.3-alpha"
+  },
+  "lint-staged": {
+    "*.js": "eslint --cache --fix"
   },
   "repository": {
     "type": "git",

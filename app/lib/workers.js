@@ -2,6 +2,7 @@ const request = require('request')
 const config = require('../../config/settings/config')
 const { log } = require('./logger')
 const notion = require('./notion')
+const SteamSession = require('./steam-session')
 
 const workers = {}
 
@@ -17,7 +18,6 @@ workers.init = async () => {
 
 notion.on('onData', async data => {
   const { results, next_cursor, has_more } = data
-  console.log(next_cursor, has_more)
   if (has_more) {
     log('Getting more data from Notion...')
     notion.getDatabaseData(false, next_cursor)
@@ -59,36 +59,36 @@ workers.getSteamIdsData = () =>
     })
   })
 
-workers.getSteamLevel = steamID =>
-  new Promise((resolve, reject) => {
-    const url = `https://api.steampowered.com/IPlayerService/GetSteamLevel/v1?key=${config.steamApiKey}&steamid=${steamID}`
+// workers.getSteamLevel = steamID =>
+//   new Promise((resolve, reject) => {
+//     const url = `https://api.steampowered.com/IPlayerService/GetSteamLevel/v1?key=${config.steamApiKey}&steamid=${steamID}`
 
-    request(url, (error, response, body) => {
-      if (error) {
-        reject(error)
-      } else {
-        console.log(body)
-        console.log(steamID)
-        resolve(JSON.parse(body).response.player_level)
-      }
-    })
-  })
+//     request(url, (error, response, body) => {
+//       if (error) {
+//         reject(error)
+//       } else {
+//         resolve(JSON.parse(body).response.player_level)
+//       }
+//     })
+//   })
 
 workers.checkSteam = async item => {
   const { id, properties } = item
   const steamID = properties.steamID.formula.string
+  const login = properties.login.checkbox
+
+  if (login) SteamSession.login(item)
 
   const steamIdBans = workers.findSteamIdBans(steamID)
   const steamIdData = workers.findSteamIdData(steamID)
 
   if (steamIdBans === undefined || steamIdData === undefined) return
 
-  // const steamLevel = await workers.getSteamLevel(steamID)
   const SteamStatus = workers.getSteamStatus(steamIdData)
   const SteamBans = workers.getSteamBans(steamIdBans)
   const AccountAge = workers.getAccountAge(steamIdData)
 
-  notion.updateDatabase(id, {
+  const data = {
     'Steam Status': {
       select: {
         name: SteamStatus
@@ -104,7 +104,9 @@ workers.checkSteam = async item => {
         start: AccountAge
       }
     }
-  })
+  }
+
+  notion.updateDatabase(id, data)
 }
 
 workers.getSteamStatus = steamIdData => {
@@ -141,5 +143,34 @@ workers.findSteamIdData = steamID => {
 
   return steamIdData
 }
+
+SteamSession.on('authenticated', async ({ session, item }) => {
+  const data = {
+    refreshToken: {
+      rich_text: [
+        {
+          text: {
+            content: session.refreshToken
+          }
+        }
+      ]
+    },
+    login: {
+      checkbox: false
+    }
+  }
+  await notion.updateDatabase(item.id, data)
+})
+
+SteamSession.on('error', async ({ error, item }) => {
+  const data = {
+    login: {
+      checkbox: false
+    }
+  }
+
+  notion.addComment(item.id, error)
+  notion.updateDatabase(item.id, data)
+})
 
 module.exports = workers
