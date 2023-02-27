@@ -1,7 +1,7 @@
 const EventEmitter = require('events')
+const fetch = require('node-fetch')
 const dayjs = require('dayjs')
 const utc = require('dayjs/plugin/utc')
-const request = require('request')
 const { EAuthSessionGuardType, EAuthTokenPlatformType, LoginSession, EResult } = require('steam-session')
 
 const { log } = require('./logger')
@@ -89,12 +89,13 @@ SteamSession.getGuardEmailCode = async (item, session) => {
   const mailID = item.properties.mailID.formula.string
   const minAgo = dayjs().subtract(5, 'minute').utc()
   const url = `https://mail.code-planet.eu/api/show/${mailID}?after=${minAgo.format('YYYY-MM-DDTHH:mm:ss.SSS')}Z`
-
-  request(url, async (error, response, body) => {
-    if (error || response.statusCode !== 200) return
-    body = JSON.parse(body)
+  try {
+    const request = await fetch(url)
+    const body = await request.json()
     session.submitSteamGuardCode(body.guard || body[0].guard)
-  })
+  } catch (error) {
+    log(error, 'error')
+  }
 }
 
 module.exports = SteamSession

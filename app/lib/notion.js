@@ -10,53 +10,57 @@ notion.client = new Client({
   auth: config.notionAuth
 })
 
-notion.getDatabase = async start_cursor => {
-  const { results, next_cursor, has_more } = await notion.client.databases.query({
+notion.getDatabaseResults = async start_cursor => {
+  const response = await notion.client.databases.query({
     database_id: notion.databaseId,
-    start_cursor
+    start_cursor,
+    filter: {
+      property: 'Banned',
+      select: {
+        equals: 'Clear'
+      }
+    }
   })
 
+  const { results, next_cursor, has_more } = response
   return { results, next_cursor, has_more }
 }
 
-notion.getDatabaseData = (interval, start_cursor) => {
+notion.getDatabaseData = async (interval, start_cursor) => {
+  const fetchData = async () => {
+    const { results, next_cursor, has_more } = await notion.getDatabaseResults(start_cursor)
+    notion.emit('onData', { results, next_cursor, has_more })
+  }
+
   if (interval) {
-    setInterval(async () => {
-      const { results, next_cursor, has_more } = await notion.getDatabase(start_cursor)
-      notion.emit('onData', { results, next_cursor, has_more })
-      return results
-    }, 1000 * 60 * interval)
+    setInterval(fetchData, 1000 * 60 * interval)
   } else {
-    notion.getDatabase(start_cursor).then(data => {
-      const { results, next_cursor, has_more } = data
-      notion.emit('onData', { results, next_cursor, has_more })
-      return results
-    })
+    await fetchData()
   }
 }
 
-notion.updateDatabase = (id, properties) =>
-  new Promise((resolve, reject) => {
-    notion.client.pages
-      .update({
-        page_id: id,
-        properties
-      })
-      .then(resolve)
-      .catch(reject)
-  })
+notion.updateDatabase = async (id, properties) => {
+  try {
+    await notion.client.pages.update({
+      page_id: id,
+      properties
+    })
+  } catch (error) {
+    /* empty */
+  }
+}
 
-notion.addComment = (id, comment) =>
-  new Promise((resolve, reject) => {
-    notion.client.comments
-      .create({
-        parent: {
-          page_id: id
-        },
-        rich_text: [{ text: { content: comment } }]
-      })
-      .then(resolve)
-      .catch(reject)
-  })
+notion.addComment = async (id, comment) => {
+  try {
+    await notion.client.comments.create({
+      parent: {
+        page_id: id
+      },
+      rich_text: [{ text: { content: comment } }]
+    })
+  } catch (error) {
+    /* empty */
+  }
+}
 
 module.exports = notion

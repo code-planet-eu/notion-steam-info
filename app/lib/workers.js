@@ -1,4 +1,5 @@
-const request = require('request')
+const fetch = require('node-fetch')
+
 const config = require('../../config/settings/config')
 const { log } = require('./logger')
 const notion = require('./notion')
@@ -13,64 +14,47 @@ workers.steamGetPlayerSummaries = []
 workers.init = async () => {
   log('Starting workers...')
   log('Getting data from Notion...')
-  notion.getDatabaseData(10)
+  notion.getDatabaseData()
 }
 
-notion.on('onData', async data => {
-  const { results, next_cursor, has_more } = data
-  if (has_more) {
-    log('Getting more data from Notion...')
-    notion.getDatabaseData(false, next_cursor)
-  }
+notion.on('onData', async ({ results, next_cursor, has_more }) => {
   log('Processing data...')
-  workers.steamIds = results.map(item => item.properties.steamID.formula.string)
-  workers.getSteamIdsData().then(() => {
-    workers.getSteamIdsBans().then(() => {
-      results.forEach(item => workers.checkSteam(item))
-    })
-  })
+  try {
+    workers.steamIds = results.map(item => item.properties.steamID.formula.string)
+    await Promise.all([workers.getSteamIdsData(), workers.getSteamIdsBans()])
+    results.forEach(item => workers.checkSteam(item))
+    if (has_more) {
+      log('Getting more data from Notion...')
+      await notion.getDatabaseData(false, next_cursor)
+    }
+  } catch (error) {
+    log(error, 'error')
+  }
 })
 
-workers.getSteamIdsBans = () =>
-  new Promise((resolve, reject) => {
+workers.getSteamIdsBans = async () => {
+  try {
     const steamIds = workers.steamIds.join(',')
     const url = `https://api.steampowered.com/ISteamUser/GetPlayerBans/v1?key=${config.steamApiKey}&steamids=${steamIds}`
-    request(url, (error, response, body) => {
-      if (error) {
-        reject(error)
-      } else {
-        workers.steamGetPlayerBans = JSON.parse(body).players
-        resolve()
-      }
-    })
-  })
+    const request = await fetch(url)
+    const { players } = await request.json()
+    workers.steamGetPlayerBans = players
+  } catch (error) {
+    log(error, 'error')
+  }
+}
 
-workers.getSteamIdsData = () =>
-  new Promise((resolve, reject) => {
+workers.getSteamIdsData = async () => {
+  try {
     const steamIds = workers.steamIds.join(',')
     const url = `https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=${config.steamApiKey}&steamids=${steamIds}`
-    request(url, (error, response, body) => {
-      if (error) {
-        reject(error)
-      } else {
-        workers.steamGetPlayerSummaries = JSON.parse(body).response.players
-        resolve()
-      }
-    })
-  })
-
-// workers.getSteamLevel = steamID =>
-//   new Promise((resolve, reject) => {
-//     const url = `https://api.steampowered.com/IPlayerService/GetSteamLevel/v1?key=${config.steamApiKey}&steamid=${steamID}`
-
-//     request(url, (error, response, body) => {
-//       if (error) {
-//         reject(error)
-//       } else {
-//         resolve(JSON.parse(body).response.player_level)
-//       }
-//     })
-//   })
+    const request = await fetch(url)
+    const { response } = await request.json()
+    workers.steamGetPlayerSummaries = response.players
+  } catch (error) {
+    log(error, 'error')
+  }
+}
 
 workers.checkSteam = async item => {
   const { id, properties } = item
@@ -112,17 +96,27 @@ workers.checkSteam = async item => {
 workers.getSteamStatus = steamIdData => {
   const { personastate, gameextrainfo } = steamIdData
 
-  if (gameextrainfo !== undefined) return 'In-Game'
-  else if (personastate === 0) return 'Offline'
-  else return 'Online'
+  switch (true) {
+    case gameextrainfo !== undefined:
+      return 'In-Game'
+    case personastate === 0:
+      return 'Offline'
+    default:
+      return 'Online'
+  }
 }
 
 workers.getSteamBans = steamIdBans => {
   const { CommunityBanned, VACBanned, NumberOfGameBans } = steamIdBans
 
-  if (CommunityBanned) return 'Community Ban'
-  else if (VACBanned || NumberOfGameBans > 0) return 'Game / Vac Ban'
-  else return 'Clear'
+  switch (true) {
+    case CommunityBanned:
+      return 'Community Ban'
+    case VACBanned || NumberOfGameBans > 0:
+      return 'Game / Vac Ban'
+    default:
+      return 'Clear'
+  }
 }
 
 workers.getAccountAge = steamIdData => {
@@ -132,17 +126,9 @@ workers.getAccountAge = steamIdData => {
   return date
 }
 
-workers.findSteamIdBans = steamID => {
-  const steamIdBans = workers.steamGetPlayerBans.find(item => item.SteamId === steamID)
+workers.findSteamIdBans = steamID => workers.steamGetPlayerBans.find(item => item.SteamId === steamID)
 
-  return steamIdBans
-}
-
-workers.findSteamIdData = steamID => {
-  const steamIdData = workers.steamGetPlayerSummaries.find(item => item.steamid === steamID)
-
-  return steamIdData
-}
+workers.findSteamIdData = steamID => workers.steamGetPlayerSummaries.find(item => item.steamid === steamID)
 
 SteamSession.on('authenticated', async ({ session, item }) => {
   const data = {
@@ -169,8 +155,8 @@ SteamSession.on('error', async ({ error, item }) => {
     }
   }
 
-  notion.addComment(item.id, error)
-  notion.updateDatabase(item.id, data)
+  await notion.addComment(item.id, error)
+  await notion.updateDatabase(item.id, data)
 })
 
 module.exports = workers
