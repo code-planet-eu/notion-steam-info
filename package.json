@@ -1,6 +1,6 @@
 {
   "name": "notion-steam-info",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "Steam account info with notion integration",
   "main": "index.js",
   "scripts": {
@@ -32,7 +32,7 @@
     "@ptkdev/logger": "^1.8.0",
     "dayjs": "^1.11.7",
     "log-to-file": "^3.0.3",
-    "request": "^2.88.2",
+    "node-fetch": "^2.6.9",
     "steam-session": "^0.0.3-alpha"
   },
   "lint-staged": {
