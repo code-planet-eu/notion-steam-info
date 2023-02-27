@@ -17,7 +17,7 @@ notion.getDatabaseResults = async start_cursor => {
     filter: {
       property: 'Banned',
       select: {
-        equals: 'Clear'
+        does_not_equal: 'Community Ban'
       }
     }
   })
