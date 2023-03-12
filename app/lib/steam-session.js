@@ -89,13 +89,15 @@ SteamSession.getGuardEmailCode = async (item, session) => {
   const mailID = item.properties.mailID.formula.string
   const minAgo = dayjs().subtract(5, 'minute').utc()
   const url = `https://mail.code-planet.eu/api/show/${mailID}?after=${minAgo.format('YYYY-MM-DDTHH:mm:ss.SSS')}Z`
-  try {
-    const request = await fetch(url)
-    const body = await request.json()
-    session.submitSteamGuardCode(body.guard || body[0].guard)
-  } catch (error) {
-    log(error, 'error')
-  }
+  setTimeout(async () => {
+    try {
+      const request = await fetch(url)
+      const body = await request.json()
+      session.submitSteamGuardCode(body.guard || body[0].guard)
+    } catch (error) {
+      log(error, 'error')
+    }
+  }, 1000 * 5)
 }
 
 module.exports = SteamSession
