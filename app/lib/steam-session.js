@@ -16,15 +16,15 @@ SteamSession.login = async item => {
   if (session.result?.actionRequired) SteamSession.guard(item, session)
 
   session.on('error', error => {
-    log(error, 'error')
+    log(`SESSION ERROR ${error}`, 'error')
 
-    SteamSession.emit('error', { error, item })
+    SteamSession.emit('error', { error: error.message, item })
   })
 
   session.on('timeout', () => {
     const error = 'This login attempt has timed out.'
 
-    log(error, 'error')
+    log(`SESSION TIMEOUT ${error}`, 'error')
 
     SteamSession.emit('error', { error, item })
   })
@@ -66,9 +66,9 @@ SteamSession.loginWithCred = async (item, session) => {
       password
     })
     .catch(error => {
-      log(error, 'error')
-      error = error.eresult === EResult.InvalidPassword && 'Invalid password.'
-      SteamSession.emit('error', { error, item })
+      log(`SESSION startWithCredentials ${error}`, 'error')
+
+      SteamSession.emit('error', { error: error.message, item })
     })
     .then(result => {
       session.result = result
