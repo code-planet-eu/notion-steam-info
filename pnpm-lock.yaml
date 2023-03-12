@@ -12,6 +12,7 @@ specifiers:
   eslint-plugin-prefer-arrow-functions: ^3.1.4
   eslint-plugin-prettier: ^4.2.1
   husky: ^8.0.3
+  jwt-decode: ^3.1.2
   lint-staged: ^13.2.0
   log-to-file: ^3.0.3
   node-fetch: ^2.6.9
@@ -23,6 +24,7 @@ dependencies:
   '@notionhq/client': 2.2.3
   '@ptkdev/logger': 1.8.0
   dayjs: 1.11.7
+  jwt-decode: 3.1.2
   log-to-file: 3.0.3
   node-fetch: 2.6.9
   steam-session: 0.0.5-alpha
@@ -1359,6 +1361,10 @@ packages:
       universalify: 2.0.0
     optionalDependencies:
       graceful-fs: 4.2.10
+    dev: false
+
+  /jwt-decode/3.1.2:
+    resolution: {integrity: sha512-UfpWE/VZn0iP50d8cz9NrZLM9lSWhcJ+0Gt/nm4by88UL+J1SiKN8/5dkjMmbEzwL2CAe+67GsegCbIKtbp75A==}
     dev: false
 
   /levn/0.4.1:

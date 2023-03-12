@@ -1,4 +1,5 @@
 const fetch = require('node-fetch')
+const jwtDecode = require('jwt-decode')
 
 const config = require('../../config/settings/config')
 const { log } = require('./logger')
@@ -131,6 +132,8 @@ workers.findSteamIdBans = steamID => workers.steamGetPlayerBans.find(item => ite
 workers.findSteamIdData = steamID => workers.steamGetPlayerSummaries.find(item => item.steamid === steamID)
 
 SteamSession.on('authenticated', async ({ session, item }) => {
+  const date = new Date(jwtDecode(session.accessToken).rt_exp * 1000).toISOString()
+
   const data = {
     refreshToken: {
       rich_text: [
@@ -143,6 +146,11 @@ SteamSession.on('authenticated', async ({ session, item }) => {
     },
     login: {
       checkbox: false
+    },
+    refreshTokenExp: {
+      date: {
+        start: date
+      }
     }
   }
   await notion.updateDatabase(item.id, data)
